@@ -1,36 +1,41 @@
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import BlogList from "./BlogList";
 
 const Home = () => {
-
-    const [blogs, setBlogs] = useState([
-        {title: "My new website",body: "lorem ipsum...",author: "metin",id: 1},
-        {title: "SA hosgeldin asqumm",body: "lorem ipsum...",author: "brna",id: 2},
-        {title: "metin react yaziyor ne alaka amk",body: "lorem ipsum...",author: "metin",id: 3}
-    ]);
-
+    const [blogs, setBlogs] = useState([]);
     const [name, setName] = useState("metin");
+    const [isPending, setIsPending] = useState(true);
+    const [error,setError] = useState(null);
 
-    const handleDelete = (id) => {
-
-        const newBlogs = blogs.filter(blog => blog.id !== id);
-        setBlogs(newBlogs);
-        
-    }
+   
 
     // good place to fetch data 
-    useEffect(()=> {
-        console.log("use effect ran");
-        console.log(name);
-    },[name])
+    useEffect(() => {
+        setTimeout(() => {
+            fetch("http://localhost:8000/blogs")
+                .then((res) => {
+                    if(!res.ok){
+                        throw Error('could not fetch the data for that resource');
+                    }
+                    return res.json();
+                })
+                .then((data) => {
+                    setBlogs(data);
+                    setIsPending(false);
+                    setError(null);
+                })
+                .catch((err) => {
+                    setError(err.message);
+                    setIsPending(false)
+                });
+        }, 1000);
+    }, []);
 
     return (
         <div className="home">
-            <BlogList blogs={blogs} title = "All Blogs" handleDelete={handleDelete}/>
-            <button onClick={()=> setName("luigi")}>change name</button>
-            <p>{name}</p>
-            
+            {error && <div>{error}</div>}
+            {isPending && <div>Loading...</div>}
+            {blogs && <BlogList blogs={blogs} title="All Blogs"  />}
         </div>
     );
 }
